@@ -9,6 +9,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: atri
       POSTGRES_PASSWORD: atri
@@ -27,6 +28,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgres://atri:atri@postgres:5432/atri
       PORT: '4000'
@@ -51,6 +53,7 @@ services:
     build:
       context: .
       dockerfile: simulator/Dockerfile
+    restart: unless-stopped
     environment:
       BACKEND_URL: http://app:4000
       CAMERA_COUNT: '10'
