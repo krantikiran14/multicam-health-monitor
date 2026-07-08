@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+.angular/
+
+# Environment / secrets — never commit these
+.env
+**/.env
+!**/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Tool-specific local config
+.claude/
+
+# Test / coverage
+coverage/
+**/coverage/

@@ -1,0 +1,74 @@
+<h1>Fleet Overview</h1>
+
+<!-- Summary cards -->
+<div class="grid grid-summary" *ngIf="summary as s" style="margin-bottom: 20px;">
+  <div class="panel stat">
+    <div class="value">{{ s.onlinePct }}%</div>
+    <div class="label">Cameras Online</div>
+    <div class="muted">{{ s.onlineCameras }} / {{ s.totalCameras }}</div>
+  </div>
+  <div class="panel stat">
+    <div class="value" [style.color]="s.activeAlerts > 0 ? 'var(--warn)' : 'var(--ok)'">
+      {{ s.activeAlerts }}
+    </div>
+    <div class="label">Active Alerts</div>
+  </div>
+  <div class="panel stat">
+    <div class="value" [style.color]="s.criticalCameras > 0 ? 'var(--crit)' : 'var(--ok)'">
+      {{ s.criticalCameras }}
+    </div>
+    <div class="label">Critical Cameras</div>
+  </div>
+  <div class="panel stat">
+    <div class="value" [style.color]="s.offlineCameras > 0 ? 'var(--offline)' : 'var(--ok)'">
+      {{ s.offlineCameras }}
+    </div>
+    <div class="label">Offline Cameras</div>
+  </div>
+</div>
+
+<!-- Camera grid -->
+<h2>Cameras</h2>
+<p class="muted" *ngIf="!loaded">Loading cameras…</p>
+<p class="muted" *ngIf="loaded && cameras.length === 0">
+  No camera data yet. Start the simulator or run the seed script.
+</p>
+
+<div class="grid grid-cards">
+  <a
+    class="panel"
+    *ngFor="let cam of cameras; trackBy: trackByCameraId"
+    [routerLink]="['/cameras', cam.cameraId]"
+    style="color: inherit;"
+  >
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>{{ cam.name }}</strong>
+      <span class="badge" [ngClass]="cam.status">{{ cam.status }}</span>
+    </div>
+    <div class="muted" style="font-size: 12px; margin-top: 2px;">{{ cam.cameraId }}</div>
+
+    <div class="metric">
+      <div class="metric-label"><span>CPU</span><span>{{ cam.cpu }}%</span></div>
+      <div class="bar"><span [ngClass]="barClass(cam.cpu, 70, 85)" [style.width.%]="cam.cpu"></span></div>
+    </div>
+    <div class="metric">
+      <div class="metric-label"><span>Memory</span><span>{{ cam.memory }}%</span></div>
+      <div class="bar"><span [ngClass]="barClass(cam.memory, 75, 90)" [style.width.%]="cam.memory"></span></div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">
+        <span>Storage</span><span>{{ cam.storageUsedPct }}%</span>
+      </div>
+      <div class="bar">
+        <span [ngClass]="barClass(cam.storageUsedPct, 80, 90)" [style.width.%]="cam.storageUsedPct"></span>
+      </div>
+    </div>
+
+    <div class="muted" style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px;">
+      <span>Latency {{ cam.latencyMs }}ms</span>
+      <span *ngIf="cam.activeAlertCount > 0" style="color: var(--warn);">
+        ⚠ {{ cam.activeAlertCount }} alert(s)
+      </span>
+    </div>
+  </a>
+</div>

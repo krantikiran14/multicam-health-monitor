@@ -1,0 +1,39 @@
+<p><a routerLink="/">← Back to overview</a></p>
+
+<div *ngIf="camera as cam">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <h1 style="margin: 0;">{{ cam.name }}</h1>
+    <span class="badge" [ngClass]="cam.status">{{ cam.status }}</span>
+  </div>
+  <p class="muted">{{ cam.cameraId }} · last reading {{ cam.lastReadingAt | date: 'MMM d, HH:mm:ss' }}</p>
+
+  <!-- Live snapshot tiles -->
+  <div class="grid grid-summary" style="margin-bottom: 20px;">
+    <div class="panel stat"><div class="value">{{ cam.cpu }}%</div><div class="label">CPU</div></div>
+    <div class="panel stat"><div class="value">{{ cam.memory }}%</div><div class="label">Memory</div></div>
+    <div class="panel stat">
+      <div class="value">{{ cam.storageUsedPct }}%</div>
+      <div class="label">Storage</div>
+      <div class="muted">{{ cam.storageUsedGb }} / {{ cam.storageTotalGb }} GB</div>
+    </div>
+    <div class="panel stat"><div class="value">{{ cam.latencyMs }}</div><div class="label">Latency (ms)</div></div>
+  </div>
+
+  <!-- Trend charts -->
+  <h2>24-hour Trends</h2>
+  <div class="grid" style="grid-template-columns: 1fr;">
+    <div class="panel" *ngFor="let chart of charts">
+      <h3>{{ chart.title }}</h3>
+      <div style="position: relative; height: 220px;">
+        <canvas
+          baseChart
+          type="line"
+          [data]="chart.data"
+          [options]="chartOptions"
+        ></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="muted" *ngIf="!camera">Loading camera…</p>

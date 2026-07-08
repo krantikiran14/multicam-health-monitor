@@ -1,0 +1,33 @@
+<h1>Active Alerts</h1>
+
+<p class="muted" *ngIf="!loaded">Loading alerts…</p>
+<div class="panel" *ngIf="loaded && alerts.length === 0">
+  <span style="color: var(--ok);">✔ No active alerts — all cameras healthy.</span>
+</div>
+
+<div class="panel" *ngIf="alerts.length > 0">
+  <table>
+    <thead>
+      <tr>
+        <th>Severity</th>
+        <th>Camera</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>Threshold</th>
+        <th>Observed</th>
+        <th>Opened</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let a of alerts; trackBy: trackByAlertId">
+        <td><span class="badge" [ngClass]="a.severity">{{ a.severity }}</span></td>
+        <td><a [routerLink]="['/cameras', a.cameraId]">{{ a.cameraName }}</a></td>
+        <td>{{ a.type }}</td>
+        <td>{{ a.message }}</td>
+        <td>{{ a.thresholdValue ?? '—' }}</td>
+        <td>{{ a.observedValue ?? '—' }}</td>
+        <td class="muted">{{ a.openedAt | date: 'MMM d, HH:mm:ss' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

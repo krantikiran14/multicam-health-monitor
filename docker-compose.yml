@@ -1,0 +1,64 @@
+# One command to run the whole system locally or on a cloud VM:
+#   docker compose up --build
+# Then seed 24h of history once:
+#   docker compose run --rm app npm run seed
+#
+# Services: postgres (data), app (API + dashboard, port 4000), simulator (feeds
+# readings into the API).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: atri
+      POSTGRES_PASSWORD: atri
+      POSTGRES_DB: atri
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U atri']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://atri:atri@postgres:5432/atri
+      PORT: '4000'
+      # Default thresholds (also editable at runtime via the dashboard).
+      CPU_MAX_PCT: '85'
+      MEMORY_MAX_PCT: '90'
+      STORAGE_MAX_PCT: '90'
+      LATENCY_MAX_MS: '250'
+      OFFLINE_SECS: '120'
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/api/health || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  simulator:
+    build:
+      context: .
+      dockerfile: simulator/Dockerfile
+    environment:
+      BACKEND_URL: http://app:4000
+      CAMERA_COUNT: '10'
+      REPORT_INTERVAL_MS: '30000'
+      FAULT_PROBABILITY: '0.02'
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  pgdata:

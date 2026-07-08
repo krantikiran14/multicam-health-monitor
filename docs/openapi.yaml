@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: Multi-Camera Health Monitor API
+  version: 1.0.0
+  description: >
+    REST API for the Multi-Camera Health Monitor. Cameras (simulated) POST health
+    readings to `/api/ingest`; the dashboard reads current status, history,
+    alerts, summary, and thresholds. All amounts are plain JSON numbers.
+servers:
+  - url: http://localhost:4000
+    description: Local development
+paths:
+  /api/health:
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  time: { type: string, format: date-time }
+  /api/ingest:
+    post:
+      summary: Ingest one camera health reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraReadingInput'
+      responses:
+        '201':
+          description: Reading stored; alerts reconciled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  breaches: { type: integer }
+                  opened: { type: integer }
+                  resolved: { type: integer }
+        '400':
+          description: Invalid body
+  /api/cameras:
+    get:
+      summary: Latest snapshot for every camera
+      responses:
+        '200':
+          description: Array of camera snapshots
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CameraSnapshot' }
+  /api/cameras/{id}:
+    get:
+      summary: Latest snapshot for one camera
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Camera snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CameraSnapshot' }
+        '404':
+          description: Camera not found
+  /api/cameras/{id}/history:
+    get:
+      summary: Historical trend for one metric of one camera
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: metric
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [cpu, memory, storage, latency]
+            default: cpu
+        - name: hours
+          in: query
+          required: false
+          schema: { type: integer, default: 24, minimum: 1, maximum: 168 }
+      responses:
+        '200':
+          description: Ordered list of trend points
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TrendPoint' }
+  /api/alerts:
+    get:
+      summary: List alerts
+      parameters:
+        - name: active
+          in: query
+          required: false
+          schema: { type: boolean, default: true }
+          description: When false, returns the full alert history.
+      responses:
+        '200':
+          description: Array of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Alert' }
+  /api/summary:
+    get:
+      summary: Aggregate fleet numbers for the dashboard
+      responses:
+        '200':
+          description: Summary object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Summary' }
+  /api/thresholds:
+    get:
+      summary: Read current health thresholds
+      responses:
+        '200':
+          description: Thresholds object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Thresholds' }
+    put:
+      summary: Update one or more thresholds at runtime
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Thresholds' }
+      responses:
+        '200':
+          description: Updated thresholds
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Thresholds' }
+        '400':
+          description: Invalid body
+components:
+  schemas:
+    CameraReadingInput:
+      type: object
+      required: [cameraId, name, online, cpu, memory, storageUsedGb, storageTotalGb, latencyMs, faultFlag, heartbeatAt]
+      properties:
+        cameraId: { type: string, example: cam-01 }
+        name: { type: string, example: Camera 01 }
+        online: { type: boolean }
+        cpu: { type: number, example: 42.5 }
+        memory: { type: number, example: 61.2 }
+        storageUsedGb: { type: number, example: 220.4 }
+        storageTotalGb: { type: number, example: 512 }
+        latencyMs: { type: number, example: 48 }
+        faultFlag: { type: boolean }
+        heartbeatAt: { type: string, format: date-time }
+    CameraSnapshot:
+      type: object
+      properties:
+        cameraId: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [online, offline, critical] }
+        online: { type: boolean }
+        cpu: { type: number }
+        memory: { type: number }
+        storageUsedGb: { type: number }
+        storageTotalGb: { type: number }
+        storageUsedPct: { type: number }
+        latencyMs: { type: number }
+        faultFlag: { type: boolean }
+        heartbeatAt: { type: string, format: date-time }
+        lastReadingAt: { type: string, format: date-time }
+        activeAlertCount: { type: integer }
+    Alert:
+      type: object
+      properties:
+        id: { type: integer }
+        cameraId: { type: string }
+        cameraName: { type: string }
+        type: { type: string, enum: [cpu_high, memory_high, storage_high, latency_high, offline, fault] }
+        severity: { type: string, enum: [warning, critical] }
+        message: { type: string }
+        thresholdValue: { type: number, nullable: true }
+        observedValue: { type: number, nullable: true }
+        openedAt: { type: string, format: date-time }
+        resolvedAt: { type: string, format: date-time, nullable: true }
+        active: { type: boolean }
+    Thresholds:
+      type: object
+      properties:
+        cpuMaxPct: { type: number, example: 85 }
+        memoryMaxPct: { type: number, example: 90 }
+        storageMaxPct: { type: number, example: 90 }
+        latencyMaxMs: { type: number, example: 250 }
+        offlineSecs: { type: number, example: 120 }
+    Summary:
+      type: object
+      properties:
+        totalCameras: { type: integer }
+        onlineCameras: { type: integer }
+        offlineCameras: { type: integer }
+        criticalCameras: { type: integer }
+        onlinePct: { type: integer }
+        activeAlerts: { type: integer }
+    TrendPoint:
+      type: object
+      properties:
+        ts: { type: string, format: date-time }
+        value: { type: number }

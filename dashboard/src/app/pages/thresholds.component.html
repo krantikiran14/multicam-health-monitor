@@ -1,0 +1,29 @@
+<h1>Health Thresholds</h1>
+<p class="muted">
+  These drive alerting. Changes are saved to the backend and take effect on the next
+  reading — no code change or redeploy needed.
+</p>
+
+<div class="panel" *ngIf="model as m" style="max-width: 480px;">
+  <div class="metric" *ngFor="let f of fields">
+    <label class="metric-label" [attr.for]="f.key">
+      <span>{{ f.label }}</span><span>{{ f.unit }}</span>
+    </label>
+    <input
+      [id]="f.key"
+      type="number"
+      [(ngModel)]="m[f.key]"
+      [name]="f.key"
+    />
+  </div>
+
+  <div style="display: flex; gap: 12px; align-items: center; margin-top: 16px;">
+    <button (click)="save()" [disabled]="saving">
+      {{ saving ? 'Saving…' : 'Save thresholds' }}
+    </button>
+    <span *ngIf="saved" style="color: var(--ok);">✔ Saved</span>
+    <span *ngIf="error" style="color: var(--crit);">{{ error }}</span>
+  </div>
+</div>
+
+<p class="muted" *ngIf="!model">Loading thresholds…</p>

@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "ATRI Multi-Camera Health Monitor",
+    "description": "REST API for the Multi-Camera Health Monitor. Set the {{baseUrl}} collection variable to your local or deployed URL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api", "health"] }
+      }
+    },
+    {
+      "name": "Ingest reading",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cameraId\": \"cam-01\",\n  \"name\": \"Camera 01\",\n  \"online\": true,\n  \"cpu\": 92,\n  \"memory\": 61,\n  \"storageUsedGb\": 220.4,\n  \"storageTotalGb\": 512,\n  \"latencyMs\": 48,\n  \"faultFlag\": false,\n  \"heartbeatAt\": \"2026-07-08T12:00:00.000Z\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/ingest", "host": ["{{baseUrl}}"], "path": ["api", "ingest"] }
+      }
+    },
+    {
+      "name": "List cameras",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/cameras", "host": ["{{baseUrl}}"], "path": ["api", "cameras"] }
+      }
+    },
+    {
+      "name": "Get camera",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/cameras/cam-01", "host": ["{{baseUrl}}"], "path": ["api", "cameras", "cam-01"] }
+      }
+    },
+    {
+      "name": "Camera history (CPU, 24h)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/cameras/cam-01/history?metric=cpu&hours=24",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "cameras", "cam-01", "history"],
+          "query": [
+            { "key": "metric", "value": "cpu" },
+            { "key": "hours", "value": "24" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Active alerts",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/alerts?active=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alerts"],
+          "query": [{ "key": "active", "value": "true" }]
+        }
+      }
+    },
+    {
+      "name": "Summary",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/summary", "host": ["{{baseUrl}}"], "path": ["api", "summary"] }
+      }
+    },
+    {
+      "name": "Get thresholds",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/thresholds", "host": ["{{baseUrl}}"], "path": ["api", "thresholds"] }
+      }
+    },
+    {
+      "name": "Update thresholds",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cpuMaxPct\": 80,\n  \"storageMaxPct\": 88\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/thresholds", "host": ["{{baseUrl}}"], "path": ["api", "thresholds"] }
+      }
+    }
+  ]
+}
