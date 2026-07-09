@@ -1,33 +1,56 @@
-<h1>Active Alerts</h1>
+<div class="page mid">
+  <h1 class="page-title">Active Alerts</h1>
+  <p class="page-sub" style="margin-bottom: 24px;">
+    {{ alerts.length }} open alert{{ alerts.length === 1 ? '' : 's' }} · auto-resolves when the next healthy reading arrives.
+  </p>
 
-<p class="muted" *ngIf="!loaded">Loading alerts…</p>
-<div class="panel" *ngIf="loaded && alerts.length === 0">
-  <span style="color: var(--ok);">✔ No active alerts — all cameras healthy.</span>
-</div>
+  <p class="muted" *ngIf="!loaded">Loading alerts…</p>
 
-<div class="panel" *ngIf="alerts.length > 0">
-  <table>
-    <thead>
-      <tr>
-        <th>Severity</th>
-        <th>Camera</th>
-        <th>Type</th>
-        <th>Message</th>
-        <th>Threshold</th>
-        <th>Observed</th>
-        <th>Opened</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let a of alerts; trackBy: trackByAlertId">
-        <td><span class="badge" [ngClass]="a.severity">{{ a.severity }}</span></td>
-        <td><a [routerLink]="['/cameras', a.cameraId]">{{ a.cameraName }}</a></td>
-        <td>{{ a.type }}</td>
-        <td>{{ a.message }}</td>
-        <td>{{ a.thresholdValue ?? '—' }}</td>
-        <td>{{ a.observedValue ?? '—' }}</td>
-        <td class="muted">{{ a.openedAt | date: 'MMM d, HH:mm:ss' }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div *ngIf="loaded && alerts.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <path d="M5 13l4 4L19 7" stroke="var(--ok)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <div style="font-weight: 600; font-size: 15px;">All clear</div>
+    <div class="muted" style="font-size: 13px; margin-top: 4px;">No active alerts — every camera is within thresholds.</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px;" *ngIf="alerts.length > 0">
+    <a
+      class="alert-card"
+      *ngFor="let a of alerts; trackBy: trackByAlertId"
+      [routerLink]="['/cameras', a.cameraId]"
+    >
+      <div class="alert-strip" [style.background]="a.severity === 'critical' ? 'var(--crit)' : 'var(--warn)'"></div>
+      <div class="alert-body">
+        <div class="alert-main">
+          <div class="alert-tags">
+            <span class="badge" [ngClass]="a.severity === 'critical' ? 'critical' : 'warning'">{{ a.severity }}</span>
+            <span style="font-weight: 600; font-size: 14px;">{{ a.cameraName }}</span>
+            <span class="alert-chip">{{ a.type }}</span>
+          </div>
+          <div class="alert-msg">{{ a.message }}</div>
+        </div>
+        <div class="alert-stats">
+          <div>
+            <div class="alert-stat-label">Limit</div>
+            <div class="alert-stat-val">{{ a.thresholdValue ?? '—' }}</div>
+          </div>
+          <div>
+            <div class="alert-stat-label">Observed</div>
+            <div
+              class="alert-stat-val"
+              [style.color]="a.severity === 'critical' ? 'var(--crit)' : 'var(--warn)'"
+              style="font-weight: 600;"
+            >{{ a.observedValue ?? '—' }}</div>
+          </div>
+          <div style="min-width: 64px;">
+            <div class="alert-stat-label">Opened</div>
+            <div class="alert-stat-val" style="font-size: 13px;">{{ a.openedAt | date: 'HH:mm:ss' }}</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
 </div>

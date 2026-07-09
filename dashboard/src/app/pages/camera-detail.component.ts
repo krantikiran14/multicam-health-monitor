@@ -13,13 +13,14 @@ interface TrendChart {
   metric: TrendMetric;
   title: string;
   color: string;
+  unit: string;
   data: ChartConfiguration<'line'>['data'];
 }
 
 /**
- * Detail view for one camera: live snapshot on top, plus CPU / memory / storage
- * trend charts for the last 24 hours. The snapshot polls every few seconds; the
- * heavier history reloads on a slower interval.
+ * Detail view for one camera: live snapshot tiles on top, plus CPU / memory /
+ * storage / latency trend charts for the last 24 hours. The snapshot updates
+ * live over the WebSocket; history reloads on a slower interval.
  */
 @Component({
   selector: 'app-camera-detail',
@@ -37,10 +38,13 @@ export class CameraDetailComponent implements OnInit, OnDestroy {
   cameraId = '';
   camera: CameraSnapshot | null = null;
 
+  // Colors match the SentryView chart palette: accent (CPU), violet (memory),
+  // warn/amber (storage), teal (latency).
   charts: TrendChart[] = [
-    { metric: 'cpu', title: 'CPU %', color: '#38bdf8', data: emptyData() },
-    { metric: 'memory', title: 'Memory %', color: '#a78bfa', data: emptyData() },
-    { metric: 'storage', title: 'Storage % used', color: '#f59e0b', data: emptyData() },
+    { metric: 'cpu', title: 'CPU', color: '#4cc2ff', unit: '%', data: emptyData() },
+    { metric: 'memory', title: 'Memory', color: '#a78bfa', unit: '%', data: emptyData() },
+    { metric: 'storage', title: 'Storage', color: '#fbbf24', unit: '%', data: emptyData() },
+    { metric: 'latency', title: 'Latency', color: '#38d6c4', unit: 'ms', data: emptyData() },
   ];
 
   readonly chartOptions: ChartConfiguration<'line'>['options'] = {
@@ -50,8 +54,8 @@ export class CameraDetailComponent implements OnInit, OnDestroy {
     elements: { point: { radius: 0 } },
     plugins: { legend: { display: false } },
     scales: {
-      x: { ticks: { color: '#94a3b8', maxTicksLimit: 6 }, grid: { color: '#273449' } },
-      y: { ticks: { color: '#94a3b8' }, grid: { color: '#273449' }, beginAtZero: true },
+      x: { ticks: { color: '#8a95a6', maxTicksLimit: 6 }, grid: { color: '#1a212c' } },
+      y: { ticks: { color: '#8a95a6' }, grid: { color: '#1a212c' }, beginAtZero: true },
     },
   };
 
@@ -70,6 +74,21 @@ export class CameraDetailComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subs.unsubscribe();
     if (this.historyTimer) clearInterval(this.historyTimer);
+  }
+
+  /** Current live value for a chart's metric, shown in its "now X" header readout. */
+  currentValue(metric: TrendMetric): number | string {
+    if (!this.camera) return '—';
+    switch (metric) {
+      case 'cpu':
+        return this.camera.online ? this.camera.cpu : '—';
+      case 'memory':
+        return this.camera.online ? this.camera.memory : '—';
+      case 'storage':
+        return this.camera.storageUsedPct;
+      case 'latency':
+        return this.camera.online ? this.camera.latencyMs : '—';
+    }
   }
 
   private loadHistory(): void {
@@ -104,7 +123,7 @@ function toChartData(
         label,
         data: points.map((p) => Math.round(p.value * 10) / 10),
         borderColor: color,
-        backgroundColor: color + '33',
+        backgroundColor: color + '24',
         fill: true,
         tension: 0.3,
         borderWidth: 2,

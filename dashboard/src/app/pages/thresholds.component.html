@@ -1,29 +1,53 @@
-<h1>Health Thresholds</h1>
-<p class="muted">
-  These drive alerting. Changes are saved to the backend and take effect on the next
-  reading — no code change or redeploy needed.
-</p>
+<div class="page narrow">
+  <h1 class="page-title">Health Thresholds</h1>
+  <p class="page-sub" style="margin-bottom: 24px; max-width: 520px;">
+    These drive alerting. Changes save to the backend and take effect on the next
+    reading.
+  </p>
 
-<div class="panel" *ngIf="model as m" style="max-width: 480px;">
-  <div class="metric" *ngFor="let f of fields">
-    <label class="metric-label" [attr.for]="f.key">
-      <span>{{ f.label }}</span><span>{{ f.unit }}</span>
-    </label>
-    <input
-      [id]="f.key"
-      type="number"
-      [(ngModel)]="m[f.key]"
-      [name]="f.key"
-    />
+  <div class="panel" *ngIf="model as m" style="padding: 8px 22px 22px;">
+    <div class="threshold-row" *ngFor="let f of fields">
+      <div class="threshold-label">
+        <div class="name">{{ f.label }}</div>
+        <div class="hint">{{ f.hint }}</div>
+      </div>
+      <input
+        type="range"
+        class="threshold-slider"
+        [min]="f.min"
+        [max]="f.max"
+        [step]="f.step"
+        [(ngModel)]="m[f.key]"
+        [name]="f.key + '_range'"
+      />
+      <div class="threshold-num-wrap">
+        <input
+          type="number"
+          class="threshold-num"
+          [min]="f.min"
+          [max]="f.max"
+          [step]="f.step"
+          [(ngModel)]="m[f.key]"
+          [name]="f.key"
+        />
+        <span class="threshold-unit">{{ f.unit }}</span>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px; margin-top: 20px;">
+      <button (click)="save()" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save thresholds' }}
+      </button>
+      <button class="secondary" (click)="reset()" [disabled]="saving">Reset to defaults</button>
+      <span *ngIf="saved" style="color: var(--ok); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M5 13l4 4L19 7" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Saved
+      </span>
+      <span *ngIf="error" style="color: var(--crit);">{{ error }}</span>
+    </div>
   </div>
 
-  <div style="display: flex; gap: 12px; align-items: center; margin-top: 16px;">
-    <button (click)="save()" [disabled]="saving">
-      {{ saving ? 'Saving…' : 'Save thresholds' }}
-    </button>
-    <span *ngIf="saved" style="color: var(--ok);">✔ Saved</span>
-    <span *ngIf="error" style="color: var(--crit);">{{ error }}</span>
-  </div>
+  <p class="muted" *ngIf="!model">Loading thresholds…</p>
 </div>
-
-<p class="muted" *ngIf="!model">Loading thresholds…</p>

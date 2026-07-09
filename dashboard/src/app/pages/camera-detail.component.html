@@ -1,39 +1,65 @@
-<p><a routerLink="/">← Back to overview</a></p>
+<div class="page wide">
+  <a routerLink="/" class="back-link">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    Back to overview
+  </a>
 
-<div *ngIf="camera as cam">
-  <div style="display: flex; align-items: center; gap: 12px;">
-    <h1 style="margin: 0;">{{ cam.name }}</h1>
-    <span class="badge" [ngClass]="cam.status">{{ cam.status }}</span>
-  </div>
-  <p class="muted">{{ cam.cameraId }} · last reading {{ cam.lastReadingAt | date: 'MMM d, HH:mm:ss' }}</p>
-
-  <!-- Live snapshot tiles -->
-  <div class="grid grid-summary" style="margin-bottom: 20px;">
-    <div class="panel stat"><div class="value">{{ cam.cpu }}%</div><div class="label">CPU</div></div>
-    <div class="panel stat"><div class="value">{{ cam.memory }}%</div><div class="label">Memory</div></div>
-    <div class="panel stat">
-      <div class="value">{{ cam.storageUsedPct }}%</div>
-      <div class="label">Storage</div>
-      <div class="muted">{{ cam.storageUsedGb }} / {{ cam.storageTotalGb }} GB</div>
+  <div *ngIf="camera as cam">
+    <div class="detail-title-row">
+      <h1 class="page-title">{{ cam.name }}</h1>
+      <span class="badge" [ngClass]="cam.status">{{ cam.status }}</span>
     </div>
-    <div class="panel stat"><div class="value">{{ cam.latencyMs }}</div><div class="label">Latency (ms)</div></div>
-  </div>
+    <p class="detail-meta">{{ cam.cameraId }} · last reading {{ cam.lastReadingAt | date: 'HH:mm:ss' }}</p>
 
-  <!-- Trend charts -->
-  <h2>24-hour Trends</h2>
-  <div class="grid" style="grid-template-columns: 1fr;">
-    <div class="panel" *ngFor="let chart of charts">
-      <h3>{{ chart.title }}</h3>
-      <div style="position: relative; height: 220px;">
-        <canvas
-          baseChart
-          type="line"
-          [data]="chart.data"
-          [options]="chartOptions"
-        ></canvas>
+    <!-- Live snapshot tiles -->
+    <div class="detail-tiles">
+      <div class="detail-tile">
+        <div class="detail-tile-label">CPU</div>
+        <div class="detail-tile-value" [style.color]="cam.online ? 'var(--text)' : 'var(--text-mute)'">
+          {{ cam.online ? cam.cpu : '—' }}<span class="unit" *ngIf="cam.online">%</span>
+        </div>
+        <div class="detail-tile-sub">utilization</div>
+      </div>
+      <div class="detail-tile">
+        <div class="detail-tile-label">Memory</div>
+        <div class="detail-tile-value" [style.color]="cam.online ? 'var(--text)' : 'var(--text-mute)'">
+          {{ cam.online ? cam.memory : '—' }}<span class="unit" *ngIf="cam.online">%</span>
+        </div>
+        <div class="detail-tile-sub">in use</div>
+      </div>
+      <div class="detail-tile">
+        <div class="detail-tile-label">Storage</div>
+        <div class="detail-tile-value">{{ cam.storageUsedPct }}<span class="unit">%</span></div>
+        <div class="detail-tile-sub">{{ cam.storageUsedGb }} / {{ cam.storageTotalGb }} GB</div>
+      </div>
+      <div class="detail-tile">
+        <div class="detail-tile-label">Latency</div>
+        <div class="detail-tile-value" [style.color]="cam.online ? 'var(--text)' : 'var(--text-mute)'">
+          {{ cam.online ? cam.latencyMs : '—' }}<span class="unit" *ngIf="cam.online">ms</span>
+        </div>
+        <div class="detail-tile-sub">round-trip</div>
+      </div>
+    </div>
+
+    <!-- Trend charts -->
+    <h2 style="font-size: 15px; margin-bottom: 14px;">24-hour trends</h2>
+    <div class="chart-grid">
+      <div class="chart-card" *ngFor="let chart of charts">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <span class="dot" style="width:9px;height:9px;" [style.background]="chart.color"></span>
+            <span class="chart-title">{{ chart.title }}</span>
+          </div>
+          <span class="chart-now">now {{ currentValue(chart.metric) }}{{ chart.unit }}</span>
+        </div>
+        <div style="position: relative; height: 150px;">
+          <canvas baseChart type="line" [data]="chart.data" [options]="chartOptions"></canvas>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<p class="muted" *ngIf="!camera">Loading camera…</p>
+  <p class="muted" *ngIf="!camera">Loading camera…</p>
+</div>

@@ -1,12 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { AppComponent } from './app.component';
 import { RealtimeService } from './realtime.service';
+import type { LiveSnapshot } from './models';
+
+const snapshot = {
+  summary: { totalCameras: 1, onlineCameras: 1, offlineCameras: 0, criticalCameras: 0, onlinePct: 100, activeAlerts: 3 },
+  cameras: [],
+  alerts: [],
+  ts: '',
+} as LiveSnapshot;
 
 /** Mock so the shell doesn't open a real WebSocket during tests. */
 class MockRealtimeService {
   connected$ = new BehaviorSubject<boolean>(true);
+  updates$ = of(snapshot);
 }
 
 describe('AppComponent', () => {
@@ -26,16 +35,18 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Multi-Camera Health Monitor');
-    expect(text).toContain('Overview');
-    expect(text).toContain('Alerts');
+    expect(text).toContain('SentryView');
+    expect(text).toContain('CAMERA HEALTH');
+    expect(text).toContain('Fleet Overview');
+    expect(text).toContain('Active Alerts');
     expect(text).toContain('Thresholds');
   });
 
-  it('shows the live WebSocket indicator when connected', () => {
+  it('shows the live WebSocket indicator and alert count pill when connected', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Live · WebSocket');
+    expect(text).toContain('3');
   });
 });

@@ -22,15 +22,27 @@ export class ThresholdsComponent implements OnInit {
   saved = false;
   error = '';
 
-  readonly fields: { key: keyof Thresholds; label: string; unit: string }[] = [
-    { key: 'cpuMaxPct', label: 'CPU max', unit: '%' },
-    { key: 'memoryMaxPct', label: 'Memory max', unit: '%' },
-    { key: 'storageMaxPct', label: 'Storage max', unit: '%' },
-    { key: 'latencyMaxMs', label: 'Latency max', unit: 'ms' },
-    { key: 'offlineSecs', label: 'Offline after', unit: 's' },
+  readonly fields: {
+    key: keyof Thresholds;
+    label: string;
+    hint: string;
+    unit: string;
+    min: number;
+    max: number;
+    step: number;
+  }[] = [
+    { key: 'cpuMaxPct', label: 'Max CPU', hint: 'Alert above', unit: '%', min: 0, max: 100, step: 1 },
+    { key: 'memoryMaxPct', label: 'Max Memory', hint: 'Alert above', unit: '%', min: 0, max: 100, step: 1 },
+    { key: 'storageMaxPct', label: 'Max Storage', hint: 'Alert above', unit: '%', min: 0, max: 100, step: 1 },
+    { key: 'latencyMaxMs', label: 'Max Latency', hint: 'Alert above', unit: 'ms', min: 0, max: 500, step: 5 },
+    { key: 'offlineSecs', label: 'Offline after', hint: 'No heartbeat for', unit: 's', min: 10, max: 300, step: 5 },
   ];
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  private load(): void {
     this.api.getThresholds().subscribe((t) => (this.model = t));
   }
 
@@ -50,5 +62,12 @@ export class ThresholdsComponent implements OnInit {
         this.error = 'Failed to save thresholds';
       },
     });
+  }
+
+  /** Discards any unsaved edits by re-fetching the last-saved values from the server. */
+  reset(): void {
+    this.saved = false;
+    this.error = '';
+    this.load();
   }
 }

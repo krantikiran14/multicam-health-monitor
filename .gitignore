@@ -25,6 +25,9 @@ Thumbs.db
 # Tool-specific local config
 .claude/
 
+# Design tool exports (not project source)
+*-handoff.zip
+
 # Test / coverage
 coverage/
 **/coverage/
