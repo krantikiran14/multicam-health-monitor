@@ -1,6 +1,10 @@
 # Keep build context small and avoid copying host artifacts into images.
+# NOTE: dashboard/dist is intentionally NOT excluded — it must be built
+# locally (npm run build) before `docker build`; this image copies it in
+# rather than compiling Angular inside the container. Only backend's dist
+# (build output, unused at runtime since tsx runs source directly) is excluded.
+backend/dist
 **/node_modules
-**/dist
 **/.angular
 **/coverage
 **/*.log

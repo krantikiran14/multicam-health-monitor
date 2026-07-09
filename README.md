@@ -116,7 +116,7 @@ Dockerfile / simulator/Dockerfile / docker-compose.yml
 | Charts | **ng2-charts / Chart.js** | Minimal, well-known charting for the trend view. |
 | Auto-refresh | **WebSocket (Socket.IO)** | Server pushes updates the instant data changes — no client polling. `NgZone.run` re-enters Angular's zone so change detection fires on each push. |
 | Tests | **Jest + Supertest** (backend), **Karma + Jasmine** (frontend) | Jest for pure logic + real-DB integration; Angular's default runner for components/services. |
-| Packaging | **Docker Compose** | `docker compose up` runs the whole system identically locally and on a cloud VM. |
+| Packaging | **Docker Compose** | `docker compose up` runs the whole system identically locally and on a cloud VM. The dashboard is built once *before* the image build (not inside Docker) — keeps builds fast and avoids straining small instances. |
 
 ---
 
@@ -127,10 +127,22 @@ Dockerfile / simulator/Dockerfile / docker-compose.yml
 Prerequisites: Docker Desktop.
 
 ```bash
+# Build the dashboard once before the image build — see note below.
+cd dashboard && npm ci && npm run build && cd ..
+
 docker compose up --build
 # then, once, load 24h+ of history so the trend charts are populated:
 docker compose run --rm app npm run seed
 ```
+
+> **Why build the dashboard first?** The `app` image's `Dockerfile` copies in an
+> already-built `dashboard/dist/` rather than running `ng build` inside Docker.
+> Angular's production build is CPU/RAM-heavy; compiling it inside a container
+> on a small machine (a free-tier cloud VM, for instance) can starve the whole
+> host badly enough that even SSH becomes unresponsive — this happened during
+> initial deployment (see §8, Known limitations). Building once on a real
+> machine and shipping the static output keeps every `docker build` fast and
+> light, locally and in the cloud.
 
 Open **http://localhost:4000** (dashboard) and **http://localhost:4000/api/docs**
 (API docs).
@@ -182,6 +194,7 @@ Deployed as a single **EC2** instance running the same Docker Compose stack.
 4. **Clone and run:**
    ```bash
    git clone <your-repo-url> && cd <repo>
+   cd dashboard && npm ci && npm run build && cd ..   # build once before the image build
    docker compose up -d --build
    docker compose run --rm app npm run seed   # 24h history
    ```
@@ -261,6 +274,16 @@ A captured pass/fail summary of both suites is in **[TEST_REPORT.md](TEST_REPORT
   are trusted. Real cameras would need authentication on the ingest endpoint.
 - **HTTP by default.** The bare deploy serves over HTTP on port 4000; HTTPS needs
   the optional Caddy/domain step.
+- **`readings` grows unbounded — this actually caused an incident.** During
+  deployment, ~2 days of continuous simulator + WebSocket activity on a
+  `t3.micro` (1 vCPU / 1 GB RAM) pushed CPU to 90–96% (confirmed via
+  CloudWatch), making even SSH unresponsive. Root cause: the periodic snapshot
+  broadcast querying an ever-growing table on a resource-constrained instance.
+  Fixed the immediate symptom with a reboot; the real fix — a retention/pruning
+  job for old readings, or a cheaper periodic-broadcast query — is the next
+  thing I'd add before running this longer-term. (Separately, building Angular
+  *inside* Docker on that same small instance made the problem worse, which is
+  why the Dockerfile now copies a pre-built `dashboard/dist/` instead — see §4.)
 
 ---
 
