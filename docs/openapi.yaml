@@ -7,6 +7,8 @@ info:
     readings to `/api/ingest`; the dashboard reads current status, history,
     alerts, summary, and thresholds. All amounts are plain JSON numbers.
 servers:
+  - url: /
+    description: Current origin (works both locally and on the deployed instance)
   - url: http://localhost:4000
     description: Local development
 paths:
